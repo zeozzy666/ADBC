@@ -3,14 +3,14 @@
 | Event   : N/A
 |
 | Usage   : Custom Script Include.  Insert custom EMSE Function below and they will be 
-|	    available to all master scripts
+|	available to all master scripts
 |
 | Notes   :
 |
 /------------------------------------------------------------------------------------------------------*/
 function logDebug(dstr) {
 logCustom(dstr, initializeLog);
-	vLevel = 1
+	vLevel = 1;
 	if (arguments.length > 1)
 		vLevel = arguments[1];
 	if ((showDebug & vLevel) == vLevel || vLevel == 1)
@@ -23,7 +23,9 @@ logCustom(dstr, initializeLog);
 function logCustom(dstr, initialize)
 {
 	sysDate = aa.date.getCurrentDate();
-	var timeStamp = sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond();
+	var timeStamp = sysDate.getUTCSeconds();
+	var otherTimeStamp = sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond();
+
 	//if initialize then it is first entry of the event
 	if (initialize)
 	{
@@ -41,23 +43,25 @@ function logCustom(dstr, initialize)
 		switch(controlString)
 		{
 			case "WorkflowTaskUpdateAfter":
-			aa.util.writeToFile("\n Time: " + timeStamp + " || Event Name: " + aa.env.getValue("EventName") + " || Username : " + aa.env.getValue("CurrentUserID")
-			+ " || User Group " + aa.env.getValue("") + " || User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
-			" || User Type: " + userType + " || ", mslogDir);
+			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
+			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes, mslogDir);
 			break;
 			case "WorkflowTaskUpdateBefore":
-			aa.util.writeToFile("\n Time: " + timeStamp + " || Event Name: " + aa.env.getValue("EventName") + " || Username : " + aa.env.getValue("CurrentUserID")
-			+ " || User Group " + aa.env.getValue("") + " || User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + " || User Type: " + userType + " || ", mslogDir);		
+			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
+			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes, mslogDir);		
 			break;
 			default:
-			aa.util.writeToFile("\n Time: " + timeStamp + " || Event Name: " + aa.env.getValue("EventName") + " || Username : " + aa.env.getValue("CurrentUserID")
-			+ " || User Group " + aa.env.getValue("") + " || User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + " || User Type: " + userType + " || ", mslogDir);	
+			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
+			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: Default" + " !| ", mslogDir);	
 		}
-		aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + " || ", mslogDir);
+		aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + " !| ", mslogDir);
 	}
 	else
 	{
-		aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + " || ", mslogDir);
+		aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + " !| ", mslogDir);
 	}
 }
 //Functions for WorkflowTaskUpdateBefore////////////////////////////////////////////////////////////////////////////////
