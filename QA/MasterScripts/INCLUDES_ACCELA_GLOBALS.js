@@ -146,6 +146,8 @@ if(capId != null){
 		var feesInvoicedTotal = capDetail.getTotalFee();
 		var balanceDue = capDetail.getBalance();
 	}
+	var wftuDes = "Triggered when a workflow action has been taken. i.e. Approve inspection step.";
+	var asDes = "Triggered when an application is submitted for the first time.";
 	loadAppSpecific(AInfo); 						
 	loadTaskSpecific(AInfo);						
 	loadParcelAttributes(AInfo);
