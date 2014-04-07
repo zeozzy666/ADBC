@@ -3,20 +3,261 @@
 | Event   : N/A
 |
 | Usage   : Custom Script Include.  Insert custom EMSE Function below and they will be 
-|	    available to all master scripts
+|	available to all master scripts
 |
 | Notes   :
 |
 /------------------------------------------------------------------------------------------------------*/
 function logDebug(dstr) {
-aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + "<Br>", mslogDir);
-	vLevel = 1
+logCustom(dstr, initializeLog);
+	vLevel = 1;
 	if (arguments.length > 1)
 		vLevel = arguments[1];
 	if ((showDebug & vLevel) == vLevel || vLevel == 1)
 		debug += dstr + br;
 	if ((showDebug & vLevel) == vLevel)
 		aa.debug(aa.getServiceProviderCode() + " : " + aa.env.getValue("CurrentUserID"), dstr);
+		
+		initializeLog = false;
+}
+function logCustom(dstr, initialize)
+{
+	sysDate = aa.date.getCurrentDate();
+	var timeStamp = sysDate.getUTCSeconds();
+	var otherTimeStamp = sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond();
+
+	//if initialize then it is first entry of the event
+	if (initialize)
+	{
+		//Determine User type
+		var userType = "Internal User";
+		if (aa.env.getValue("CurrentUserID").indexOf("PUBLIC") > -1)
+		{
+			userType = "Internet User";
+		}
+		else if (aa.env.getValue("CurrentUserID").indexOf("MOBILE") > -1)
+		{
+			userType = "Mobile App";
+		}
+		//Output event information based on event type
+		switch(controlString)
+		{
+			case "WorkflowTaskUpdateAfter":
+			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
+			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes, mslogDir);
+			break;
+			case "WorkflowTaskUpdateBefore":
+			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
+			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes, mslogDir);		
+			break;
+			default:
+			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
+			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: Default" + " !| ", mslogDir);	
+		}
+		aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + " !| ", mslogDir);
+	}
+	else
+	{
+		aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + " !| ", mslogDir);
+	}
+}
+//Functions for WorkflowTaskUpdateBefore////////////////////////////////////////////////////////////////////////////////
+function compareDate(date1,date2)
+{
+    year = date1.getYear()-date2.getYear();
+    month = date1.getMonth() -date2.getMonth(); 
+     day = date1.getDayOfMonth()- date2.getDayOfMonth();
+aa.print("date1.getMonth()=="+date1.getMonth()+"date2.getMonth()=="+date2.getMonth());
+
+aa.print("date1.getDayOfMonth()=="+date1.getDayOfMonth()+"date2.getDayOfMonth()=="+date2.getDayOfMonth());
+   if(year >0)
+   {
+     return true;
+
+   }else if(month>0)
+   {
+      return  true;  
+   }else if(day>0)
+   {
+      return true;
+   }
+
+   return false;
+
+}
+function getRenewalCapForIncomplete(pParentCapId)
+{
+    if (pParentCapId== null || aa.util.instanceOfString(pParentCapId))
+    {
+    }
+    var result = aa.cap.getProjectByChildCapID(pParentCapId, "Renewal", "Incomplete");
+    if(result.getSuccess())
+    {
+      projectScriptModels = result.getOutput();
+      if (projectScriptModels == null || projectScriptModels.length == 0)
+      {
+        aa.print("WARNING: Failed to get renewal CAP by child CAPID(" + pParentCapId+ ") for incomplete");
+        return null;
+      }
+      projectScriptModel = projectScriptModels[0];
+      return projectScriptModel;
+    }  
+    else 
+    {
+      logDebug("WARNING: Failed to get renewal CAP by child CAP(" + pParentCapId+ ") for incomplete: " + result.getErrorMessage());
+      return null;
+    }
+}
+function invoiceAEFees()
+    {
+    //invoices all assessed fees having fperiod, optional fee code(s) to exclude
+
+	
+       var invFeeSeqList = new Array();
+	var invPaymentPeriodList = new Array();
+
+
+	var skipArray = new Array();
+	var invoiceAll = false;
+	if (arguments.length > 0)
+		{
+		for (var i=0; i<arguments.length; i++)
+			skipArray.push(arguments[i]);
+		}
+	else
+		invoiceAll = true;
+
+
+	var feeA = loadFees(capId)
+        var deptName = getDepartmentName(currentUserID);
+	for (var x in feeA)
+		{
+		thisFee = feeA[x];
+		if (!invoiceAll && (exists(thisFee.accCodeL1,skipArray) || thisFee.code == "AE FEE POST")) continue;
+
+		if ((thisFee.status.equals("NEW") && thisFee.amount*1 > 0)&&thisFee.sched.equals(deptName.toUpperCase()))
+			{
+			invFeeSeqList.push(thisFee.sequence);
+			invPaymentPeriodList.push(thisFee.period);
+            logDebug("Assessed fee "+thisFee.code+" found and tagged for invoicing");
+            }
+        }
+
+	if (invFeeSeqList.length)
+		{
+		invoiceResult = aa.finance.createInvoice(capId, invFeeSeqList, invPaymentPeriodList);
+		if (invoiceResult.getSuccess())
+			{
+			logDebug("Invoicing assessed fee items is successful.");
+			balanceDue = aa.cap.getCapDetail(capId).getOutput().getBalance();
+			logDebug("Updated balanceDue to " + balanceDue);
+			}
+		else
+			logDebug("**ERROR: Invoicing the fee items assessed to app # " + capIDString + " was not successful.  Reason: " +  invoiceResult.getErrorMessage());
+		}
+              
+
+    }
+function updateExpirationStatus(capId)
+{
+     
+    var result = aa.expiration.getLicensesByCapID(capId);
+    if(result.getSuccess())
+    {
+       expirationModels = result.getOutput();
+       expiration = expirationModels.getB1Expiration();
+      if(expiration)
+       {
+       tmpDate = expirationModels.getExpDate();
+
+       if(compareDate(tmpDate,sysDate))
+       {
+         expiration.setExpStatus("About to Expire");
+
+       }
+       else
+       {
+         expiration.setExpStatus("Expired");
+       }
+
+       aa.expiration.editB1Expiration(expiration);
+
+              logDebug("Updated renewal to status successfully! "  );                   
+       }
+
+         }
+}
+function getRenewalCapForReview(pParentCapId)
+{
+    if (pParentCapId== null || aa.util.instanceOfString(pParentCapId))
+    {
+    }
+    var result = aa.cap.getProjectByChildCapID(pParentCapId, "Renewal", "Review");
+    if(result.getSuccess())
+    {
+      projectScriptModels = result.getOutput();
+      if (projectScriptModels == null || projectScriptModels.length == 0)
+      {
+        aa.print("WARNING: Failed to get renewal CAP by child CAPID(" + pParentCapId+ ") for review");
+        return null;
+      }
+      projectScriptModel = projectScriptModels[0];
+      return projectScriptModel;
+    }  
+    else 
+    {
+      logDebug("WARNING: Failed to get renewal CAP by child CAP(" + pParentCapId+ ") for review: " + result.getErrorMessage());
+      return null;
+    }
+}
+
+function getAENewFees()
+{
+
+       var invFeeSeqList = new Array();
+	var invPaymentPeriodList = new Array();
+
+
+	var skipArray = new Array();
+	var invoiceAll = false;
+	if (arguments.length > 0)
+		{
+		for (var i=0; i<arguments.length; i++)
+			skipArray.push(arguments[i]);
+		}
+	else
+		invoiceAll = true;
+
+
+	var feeA = loadFees(capId)
+        var deptName = getDepartmentName(currentUserID);
+	for (var x in feeA)
+		{
+		var thisFee = feeA[x];
+		if (!invoiceAll && (exists(thisFee.accCodeL1,skipArray) || thisFee.code == "AE FEE POST")) continue;
+
+		if ((thisFee.status.equals("NEW") && thisFee.amount*1 > 0)&& thisFee.sched.equals(deptName.toUpperCase()) )
+			{
+			invFeeSeqList.push(thisFee.sequence);
+			invPaymentPeriodList.push(thisFee.period);
+            logDebug("Assessed fee "+thisFee.code+" found and tagged for invoicing");
+            }
+        }
+        aa.print("invFeeSeqList==" +invFeeSeqList);
+
+	if (invFeeSeqList.length>0 && invFeeSeqList !=null &&invFeeSeqList != "")
+	{
+		  return true;
+	}
+	else
+	{
+		  return false;
+	}
+		
+
 }
 function ExemptAndApply()
 {
@@ -81,7 +322,7 @@ function addCustomFee(feeSched, feeCode, feeDescr, feeAm, feeAcc) {
         if (feeAcc) newFee.setAccCodeL1(feeAcc);
         if (feeAcc3) newFee.setAccCodeL3(feeAcc3);
         if (notes) newFee.setFeeNotes(notes);
-        if ("Federal".equals(newFee.getSubGroup())) newFee.setUdes("Federal");
+        if ("Federal".equals(newFee.getSubGroup())) newFee.setSubGroup("Federal");
         aa.finance.editFeeItem(newFee);
     }
 }
@@ -477,7 +718,33 @@ function buildWorkflow() {
 		
 		/** End Remove **/			
 }
+function copyContacts(pFromCapId, pToCapId) {
+    //Copies all contacts from pFromCapId to pToCapId
+    //07SSP-00037/SP5017
+    //
+    if (pToCapId == null)
+        var vToCapId = capId;
+    else
+        var vToCapId = pToCapId;
 
+    var capContactResult = aa.people.getCapContactByCapID(pFromCapId);
+    var copied = 0;
+    if (capContactResult.getSuccess()) {
+        var Contacts = capContactResult.getOutput();
+        for (yy in Contacts) {
+            var newContact = Contacts[yy].getCapContactModel();
+            newContact.setCapID(vToCapId);
+            aa.people.createCapContactWithAttribute(newContact);
+            copied++;
+            logDebug("Copied contact from " + pFromCapId.getCustomID() + " to " + vToCapId.getCustomID());
+        }
+    }
+    else {
+        logMessage("**ERROR: Failed to get contacts: " + capContactResult.getErrorMessage());
+        return false;
+    }
+    return copied;
+}
 function calculateAeFees(actCap)
 {
 /** get Cap's City ***/
@@ -817,7 +1084,7 @@ function handleNewFee(newFeeResult, originalFee)
 	newFee.setAccCodeL1(originalFee["Account Code"].fieldValue);
 	newFee.setAccCodeL3(originalFee["eDirham Code"].fieldValue);
 	newFee.setFeeNotes(originalFee["Approving Entity"].fieldValue)
-	newFee.setUdes(originalFee["Type"].fieldValue);
+	newFee.setSubGroup(originalFee["Type"].fieldValue);
 	newFee.setFee(amt);
 
 	editFee = aa.finance.editFeeItem(newFee);
@@ -2413,155 +2680,7 @@ function getIdenticalAddressArray(itemCap,ats,statusArray)
 
 	return resultArray;
 	}
-function getLastContactAmendments(customId)
-{
-	//fish 01/25/2011
-	//customId as amendment CAP
-	//Returns a string with the delta between an amendment CAP and its parent license CAP
-	
-	var result = "";
-	var found = false;
-	var capId = aa.cap.getCapID(customId).getOutput();
-	var parentCapId = getParent(capId);
-	var capContactArray = aa.people.getCapContactByCapID(capId);
-    var parentCapContactArray = aa.people.getCapContactByCapID(parentCapId);
-	
-	if (!capContactArray.getSuccess())
-	{
-		logDebug("**ERROR: Problem getting CapID " + capContactArray.getErrorMessage())
-	}
-	else
-	{
-		capContactArray = capContactArray.getOutput();
-	}
-	
-		if (!parentCapContactArray.getSuccess())
-	{
-		logDebug("**ERROR: Problem getting CapID " + parentCapContactArray.getErrorMessage())
-	}
-	else
-	{
-		parentCapContactArray = parentCapContactArray.getOutput();
-	}
-	
-	for(c in capContactArray)
-	{
-		found = false;
-		for (p in parentCapContactArray)
-		{
-			if(capContactArray[c].getCapContactModel().getRefContactNumber().equals(parentCapContactArray[p].getCapContactModel().getRefContactNumber()))
-			{
-				found = true;
-				
-				logDebug("Getting Attributes for contact " + capContactArray[c].getPeople().getFirstName());
-				attributesCA = capContactArray[c].getPeople().getAttributes().toArray();
-				
-				logDebug("Getting Attributes for contact " + parentCapContactArray[p].getPeople().getFirstName())
-				attributesCN = parentCapContactArray[p].getPeople().getAttributes().toArray();
 
-				for (a in attributesCA)
-				{
-					for (n in attributesCN)
-					{
-						if(attributesCA[a].attributeName.equals("SHARE PERCENTAGE") && attributesCN[n].attributeName.equals("SHARE PERCENTAGE"))
-						{
-							if(!attributesCA[a].attributeValue.equals(attributesCN[n].attributeValue))
-							{
-								result+="[Partners Share Amendment]:: Contact " + capContactArray[c].getPeople().getFirstName() + " " + capContactArray[c].getPeople().getLastName() + " from " + attributesCN[n].attributeValue + "% to " + attributesCA[a].attributeValue + "%\n";
-							}
-						}
-						else if(attributesCA[a].attributeName.equals("NATIONALITY") && attributesCN[n].attributeName.equals("NATIONALITY"))
-						{
-							if(!attributesCA[a].attributeValue.equals(attributesCN[n].attributeValue))
-							{
-								result+="[Partners Nationality Amendment]:: Contact " + capContactArray[c].getPeople().getFirstName() + " " + capContactArray[c].getPeople().getLastName() + " from " + attributesCN[n].attributeValue + " to " + attributesCA[a].attributeValue + "\n";
-							}
-						}
-						else if(attributesCA[a].attributeName.equals("REPRESENTATIVE TYPE") && attributesCN[n].attributeName.equals("REPRESENTATIVE TYPE"))
-						{
-							if(!attributesCA[a].attributeValue.equals(attributesCN[n].attributeValue))
-							{
-								result+="[Partners Amendment]:: Contact " + capContactArray[c].getPeople().getFirstName() + " " + capContactArray[c].getPeople().getLastName() + " from " + attributesCN[n].attributeValue + " to " + attributesCA[a].attributeValue + "\n";
-							}
-						}
-					}
-				}
-			}
-		}
-		if(!found)
-		{
-			for(x in capContactArray[c].getPeople().getAttributes().toArray())
-			{
-				if(capContactArray[c].getPeople().getAttributes().toArray()[x].attributeName.equals("REPRESENTATIVE TYPE"))
-				{
-					repType = capContactArray[c].getPeople().getAttributes().toArray()[x].attributeValue;
-				}				
-			}
-			if(repType.equals("Manager"))
-			{
-				result+="[Manager Amendment]:: Added manager " + capContactArray[c].getPeople().getFirstName() + " " + capContactArray[c].getPeople().getLastName() + "\n";
-			}
-			else if(repType.equals("Heirs Representative"))
-			{
-				result+="[Heirs/Commissioner Amendment]:: Added heir " + capContactArray[c].getPeople().getFirstName() + " " + capContactArray[c].getPeople().getLastName() + "\n";
-			}
-			else if(repType.equals("Commissioner to Sign"))
-			{
-				result+="[Heirs/Commissioner Amendment]:: Added Commissioner to Sign " + capContactArray[c].getPeople().getFirstName() + " " + capContactArray[c].getPeople().getLastName() + "\n";			
-			}
-			else if(repType.equals("Sponsor"))
-			{
-				result+="[Sponsor Amendment]:: Added sponsor " + capContactArray[c].getPeople().getFirstName() + " " + capContactArray[c].getPeople().getLastName() + "\n";
-			}
-			else
-			{
-				result+="[Partners Amendment]:: Added contact " + capContactArray[c].getPeople().getFirstName() + " " + capContactArray[c].getPeople().getLastName() + "\n";
-			}
-		}
-	}
-	for(p in parentCapContactArray)
-	{
-		found = false;
-		for (c in capContactArray)
-		{
-			if(parentCapContactArray[p].getCapContactModel().getRefContactNumber().equals(capContactArray[c].getCapContactModel().getRefContactNumber()))
-			{
-				found = true;
-			}
-		}
-		if(!found)
-		{
-			for(p in parentCapContactArray[p].getPeople().getAttributes().toArray())
-			{
-				if(parentCapContactArray[p].getPeople().getAttributes().toArray()[x].attributeName.equals("REPRESENTATIVE TYPE"))
-				{
-					repType = parentCapContactArray[p].getPeople().getAttributes().toArray()[x].attributeValue;
-				}				
-			}
-			if(repType.equals("Manager"))
-			{
-				result+="[Manager Amendment]:: Removed manager " + parentCapContactArray[p].getPeople().getFirstName() + " " + parentCapContactArray[p].getPeople().getLastName() + "\n";
-			}
-			else if(repType.equals("Heirs Representative"))
-			{
-				result+="[Heirs/Commissioner Amendment]:: Removed heir " + parentCapContactArray[p].getPeople().getFirstName() + " " + parentCapContactArray[p].getPeople().getLastName() + "\n";
-			}
-			else if(repType.equals("Commissioner to Sign"))
-			{
-				result+="[Heirs/Commissioner Amendment]:: Removed Commissioner to Sign " + parentCapContactArray[p].getPeople().getFirstName() + " " + parentCapContactArray[p].getPeople().getLastName() + "\n";			
-			}
-			else if(repType.equals("Sponsor"))
-			{
-				result+="[Sponsor Amendment]:: Removed sponsor " + parentCapContactArray[p].getPeople().getFirstName() + " " + parentCapContactArray[p].getPeople().getLastName() + "\n";
-			}
-			else
-			{
-				result+="[Partners Amendment]:: Removed contact " + parentCapContactArray[p].getPeople().getFirstName() + " " + parentCapContactArray[p].getPeople().getLastName() + "\n";
-			}		
-		}
-	}
-return result;
-}
 function getLegalFormCap(moduleName, trxType, legalFormType, appStatus)
 	{
 	logDebug("looking for a " + moduleName + " Cap for legal form: " + legalFormType + "  Transaction Type: " + trxType + "   App Status: " + appStatus);
@@ -4049,7 +4168,7 @@ if(contactList != null)
 			aArray["relation"] = peopleModel.getRelation();
 			aArray["businessName"] = peopleModel.getBusinessName();
 			aArray["email"] = peopleModel.getEmail();
-			aArray["fein"] = peopleModel.getFein();
+			aArray["FEIN"] = peopleModel.getFein();
 			aArray["phone1"] = peopleModel.getPhone1();
 			aArray["phone2"] = peopleModel.getPhone2();
 			aArray["phone2countrycode"] = peopleModel.getPhone2CountryCode();
@@ -6819,6 +6938,80 @@ function updateFee(fcode,fsched,fperiod,fqty,finvoice,pDuplicate,pFeeSeq)
 			
 	return feeSeq;
 	}
+	
+
+function loadFees()  // option CapId
+{
+    //  load the fees into an array of objects.  Does not
+    var itemCap = capId
+    if (arguments.length > 0) {
+        ltcapidstr = arguments[0]; // use cap ID specified in args
+        if (typeof (ltcapidstr) == "string") {
+            var ltresult = aa.cap.getCapID(ltcapidstr);
+            if (ltresult.getSuccess())
+                itemCap = ltresult.getOutput();
+            else
+            { //aa.print("**ERROR: Failed to get cap ID: " + ltcapidstr + " error: " + ltresult.getErrorMessage()); 
+		return false; }
+        }
+        else
+            itemCap = ltcapidstr;
+    }
+
+    //aa.print("loading fees for cap " + itemCap.getCustomID());
+    var feeArr = new Array();
+
+    var feeResult = aa.fee.getFeeItems(itemCap);
+    if (feeResult.getSuccess())
+    { var feeObjArr = feeResult.getOutput(); }
+    else
+    { //aa.print("**ERROR: getting fee items: " + capContResult.getErrorMessage()); 
+	return false; }
+
+    for (ff in feeObjArr) {
+        fFee = feeObjArr[ff];
+        var myFee = new Fee();
+        var amtPaid = 0;
+
+        var pfResult = aa.finance.getPaymentFeeItems(itemCap, null);
+        if (pfResult.getSuccess()) {
+            var pfObj = pfResult.getOutput();
+            for (ij in pfObj)
+                if (fFee.getFeeSeqNbr() == pfObj[ij].getFeeSeqNbr())
+                amtPaid += pfObj[ij].getFeeAllocation()
+        }
+
+        myFee.sequence = fFee.getFeeSeqNbr();
+        myFee.code = fFee.getFeeCod();
+        myFee.sched = fFee.getF4FeeItemModel().getFeeSchudle();
+        myFee.description = fFee.getFeeDescription();
+        myFee.unit = fFee.getFeeUnit();
+        myFee.amount = fFee.getFee();
+        myFee.amountPaid = amtPaid;
+        if (fFee.getApplyDate()) myFee.applyDate = convertDate(fFee.getApplyDate());
+        if (fFee.getEffectDate()) myFee.effectDate = convertDate(fFee.getEffectDate());
+        if (fFee.getExpireDate()) myFee.expireDate = convertDate(fFee.getExpireDate());
+        myFee.status = fFee.getFeeitemStatus();
+        myFee.period = fFee.getPaymentPeriod();
+        myFee.display = fFee.getDisplay();
+        myFee.accCodeL1 = fFee.getAccCodeL1();
+        myFee.accCodeL2 = fFee.getAccCodeL2();
+        myFee.accCodeL3 = fFee.getAccCodeL3();
+        myFee.formula = fFee.getFormula();
+        myFee.udes = fFee.getUdes();
+        myFee.UDF1 = fFee.getUdf1();
+        myFee.UDF2 = fFee.getUdf2();
+        myFee.UDF3 = fFee.getUdf3();
+        myFee.UDF4 = fFee.getUdf4();
+        myFee.subGroup = fFee.getSubGroup();
+        myFee.calcFlag = fFee.getCalcFlag(); ;
+        myFee.calcProc = fFee.getFeeCalcProc();
+
+        feeArr.push(myFee)
+    }
+
+    return feeArr;
+}
 //Custom for ADBC. Stock function does not work in Arabic.
 function getScriptAction(strControl)
 	{
@@ -6886,8 +7079,94 @@ function setContactBusinessNameToAppName()
 	  }
 	}
 }
-   
-   
-   
-   
-   
+function validateAEFees()
+{
+   var cal = 0;
+   for (x in wfTSI)
+		{
+                                if(wfTSI[x].getCheckboxDesc()=="Amount" && wfTSI[x].getChecklistComment()!=null&& wfTSI[x].getChecklistComment()!="")
+                  {
+                     cal = cal +1;
+                     break;
+                    
+                   }else if (wfTSI[x].getCheckboxDesc()=="Amount 2" && wfTSI[x].getChecklistComment()!=null&& wfTSI[x].getChecklistComment()!="")
+                   {
+                     cal = cal +1;
+                     break;
+
+                   }else if (wfTSI[x].getCheckboxDesc()=="Amount 3" && wfTSI[x].getChecklistComment()!=null&& wfTSI[x].getChecklistComment()!="")
+                   {
+                     cal = cal +1;
+                     break;
+
+                   }else if (wfTSI[x].getCheckboxDesc()=="Amount 4" && wfTSI[x].getChecklistComment()!=null&& wfTSI[x].getChecklistComment()!="")
+                   {
+                     cal = cal +1;
+                     break;
+
+                   }else if (wfTSI[x].getCheckboxDesc()=="Amount 5" && wfTSI[x].getChecklistComment()!=null&& wfTSI[x].getChecklistComment()!="")
+                   {
+                     cal = cal +1;
+                     break;
+
+                   }
+
+	        }
+    aa.print("cal=="+cal);
+    if(cal > 0)
+   {
+      return false;
+
+   }
+   else
+   {
+    return true;
+   }
+
+}
+
+function getAENewFees()
+{
+
+       var invFeeSeqList = new Array();
+	var invPaymentPeriodList = new Array();
+
+
+	var skipArray = new Array();
+	var invoiceAll = false;
+	if (arguments.length > 0)
+		{
+		for (var i=0; i<arguments.length; i++)
+			skipArray.push(arguments[i]);
+		}
+	else
+		invoiceAll = true;
+
+
+	var feeA = loadFees(capId)
+        var deptName = getDepartmentName(currentUserID);
+	for (var x in feeA)
+		{
+		var thisFee = feeA[x];
+		if (!invoiceAll && (exists(thisFee.accCodeL1,skipArray) || thisFee.code == "AE FEE POST")) continue;
+
+		if ((thisFee.status.equals("NEW") && thisFee.amount*1 > 0)&&thisFee.sched.equals(deptName.toUpperCase()) )
+			{
+			invFeeSeqList.push(thisFee.sequence);
+			invPaymentPeriodList.push(thisFee.period);
+            logDebug("Assessed fee "+thisFee.code+" found and tagged for invoicing");
+            }
+        }
+        aa.print("invFeeSeqList==" +invFeeSeqList);
+
+	if (invFeeSeqList.length>0 && invFeeSeqList !=null &&invFeeSeqList != "")
+	{
+		  return true;
+	}
+	else
+	{
+		  return false;
+	}
+		
+
+}
