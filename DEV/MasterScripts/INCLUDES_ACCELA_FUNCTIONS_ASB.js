@@ -546,6 +546,9 @@ function loadASITablesBefore() {
 	//
 
 	var gm =  aa.env.getValue("AppSpecificTableGroupModel");
+         if (gm && !gm.getTablesMap) {
+                return ;
+        }
 	var ta = gm.getTablesMap().values()
 	var tai = ta.iterator();
 
@@ -596,6 +599,9 @@ function loadASITables() {
 	//
 
 	var gm =  aa.env.getValue("AppSpecificTableGroupModel");
+         if (gm && !gm.getTablesMap) {
+                return ;
+        }
 	var ta = gm.getTablesMap().values()
 	var tai = ta.iterator();
 
@@ -1061,6 +1067,7 @@ function token(tstr)
 		}
 	return String(tstr);
   	}
+//Custom Abu Dhabi BC/////////////////////////////////////////////////////////////////////////////////////
 function loadASITable(tname) {
 
  	//
