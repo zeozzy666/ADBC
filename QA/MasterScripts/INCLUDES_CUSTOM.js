@@ -22,9 +22,7 @@ logCustom(dstr, initializeLog);
 }
 function logCustom(dstr, initialize)
 {
-	sysDate = aa.date.getCurrentDate();
-	var timeStamp = sysDate.getUTCSeconds();
-	var otherTimeStamp = sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond();
+	var timeStamp = new Date().getTime();
 
 	//if initialize then it is first entry of the event
 	if (initialize)
@@ -39,29 +37,52 @@ function logCustom(dstr, initialize)
 		{
 			userType = "Mobile App";
 		}
+
+		//Get userGroup
+		var currentUserGroup;
+		var currentUserGroupObj = aa.userright.getUserRight(appTypeArray[0],currentUserID).getOutput()
+		if (currentUserGroupObj) 
+		{
+			currentUserGroup = currentUserGroupObj.getGroupName();
+		}
+
 		//Output event information based on event type
 		switch(controlString)
 		{
 			case "WorkflowTaskUpdateAfter":
 			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
-			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
-			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes, mslogDir);
+			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes + " !| ", mslogDir);
 			break;
+
 			case "WorkflowTaskUpdateBefore":
 			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
-			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
-			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes, mslogDir);		
+			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes + " !| ", mslogDir);		
 			break;
+
+			case "ApplicationSubmitBefore":
+			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
+			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + asDes + " !| ", mslogDir);			
+			break;
+
+			case "ApplicationSubmitAfterStart":
+			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
+			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + asDes + " !| ", mslogDir);
+			break;
+
 			default:
 			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
-			+ " !| User Group " + aa.env.getValue("") + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
+			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
 			" !| User Type: " + userType + " !| " + "Event Category: Default" + " !| ", mslogDir);	
 		}
-		aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + " !| ", mslogDir);
+		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
 	}
 	else
 	{
-		aa.util.writeToFile(sysDate.getHourOfDay() + ":" + sysDate.getMinute() + ":" + sysDate.getSecond() + " " + dstr + " !| ", mslogDir);
+		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
 	}
 }
 //Functions for WorkflowTaskUpdateBefore////////////////////////////////////////////////////////////////////////////////
@@ -1046,7 +1067,6 @@ function handlePostFee(currentFee)
 				}
 				else if (currentFee["Max Activity"].fieldValue.equals("CHECKED") && currentFee["Fee Description"].fieldValue.equals(feeEntityTitle) &&  amt >= feeList[feeNum].getFee())
 				{
-
 					logDebug("Fee item removed because of its already there: " + feeList[feeNum].getFeeDescription());
 					aa.finance.removeFeeItem(feeList[feeNum].getF4FeeItem());
 				}
