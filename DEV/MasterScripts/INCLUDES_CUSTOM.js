@@ -23,7 +23,8 @@ logCustom(dstr, initializeLog);
 function logCustom(dstr, initialize)
 {
 	var timeStamp = new Date().getTime();
-
+	var asDes = "";
+	var wftuDes = "";
 	//if initialize then it is first entry of the event
 	if (initialize)
 	{
