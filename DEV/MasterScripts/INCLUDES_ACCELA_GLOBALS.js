@@ -21,8 +21,8 @@ var useAppSpecificGroupName = false;	// Use Group name when populating App Speci
 var useTaskSpecificGroupName = false;	// Use Group name when populating Task Specific Info Values
 var enableVariableBranching = true;	// Allows use of variable names in branching.  Branches are not followed in Doc Only
 var maxEntries = 99;			// Maximum number of std choice entries.  Entries must be Left Zero Padded
-var mslogDir = "C:\\Accela72\\av.biz\\log\\" + aa.env.getValue("CurrentUserID") + "\\" + aa.date.getCurrentDate().getDayOfMonth() + "-" + aa.date.getCurrentDate().getMonth() + "-" + aa.date.getCurrentDate().getYear() + ".html";
-
+var mslogDir = "C:\\AccelaLogs\\" + aa.date.getCurrentDate().getDayOfMonth() + "-" + aa.date.getCurrentDate().getMonth() + "-" + aa.date.getCurrentDate().getYear() + "\\" + aa.env.getValue("CurrentUserID") + ".txt";
+var initializeLog = true;
 /*------------------------------------------------------------------------------------------------------/
 | END User Configurable Parameters
 /------------------------------------------------------------------------------------------------------*/
@@ -146,6 +146,8 @@ if(capId != null){
 		var feesInvoicedTotal = capDetail.getTotalFee();
 		var balanceDue = capDetail.getBalance();
 	}
+	var wftuDes = "Triggered when a workflow action has been taken. i.e. Approve inspection step.";
+	var asDes = "Triggered when an application is submitted for the first time.";
 	loadAppSpecific(AInfo); 						
 	loadTaskSpecific(AInfo);						
 	loadParcelAttributes(AInfo);					
