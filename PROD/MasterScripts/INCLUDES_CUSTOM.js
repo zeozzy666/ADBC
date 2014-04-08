@@ -9,7 +9,7 @@
 |
 /------------------------------------------------------------------------------------------------------*/
 function logDebug(dstr) {
-logCustom(dstr, initializeLog);
+//logCustom(dstr, initializeLog);
 	vLevel = 1;
 	if (arguments.length > 1)
 		vLevel = arguments[1];
