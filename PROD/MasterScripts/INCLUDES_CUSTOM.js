@@ -344,6 +344,7 @@ function addCustomFee(feeSched, feeCode, feeDescr, feeAm, feeAcc) {
         if (feeAcc) newFee.setAccCodeL1(feeAcc);
         if (feeAcc3) newFee.setAccCodeL3(feeAcc3);
         if (notes) newFee.setFeeNotes(notes);
+        if ("Federal".equals(newFee.getSubGroup())) newFee.setSubGroup("Federal");
         aa.finance.editFeeItem(newFee);
     }
 }
@@ -3604,32 +3605,6 @@ function removeContacts(itemCap)
 
 	}
 	
-function removeDEDFees4Farm(feeCapId)
-	{
-	
-       	
-	var feeResult=aa.fee.getFeeItems(feeCapId);
-	if (feeResult.getSuccess())
-		{ var feeObjArr = feeResult.getOutput(); }
-	else
-		{ logDebug( "**ERROR: getting fee items: " + capContResult.getErrorMessage()); return false}
-        aa.print("feeCapId=="+feeCapId);
-       //aa.print("feeObjArr =="+feeObjArr );
-
-          for (ff in feeObjArr)
-		//only grab fees that belong to DED and ignore certain fees
-		if(feeObjArr[ff].getAccCodeL1()!=null && feeObjArr[ff].getAccCodeL1().indexOf("323")>-1)
-                {
-                     
-  aa.print("feeObjArr[ff]=="+feeObjArr[ff].getAccCodeL1());
-                    aa.finance.removeFeeItem(feeObjArr[ff].getF4FeeItemModel()); 
-                   
-                }
-
-       
-}
-
-	
 function removeLicensedProfessional(lsm)  {
 
 
@@ -4318,14 +4293,6 @@ function createRefLicProf(rlpId,rlpType,pContactType)
 		}
 	}
 	
-	
-function equalsSignboard(Signboard1, Signboard2)
-{
-	if (Signboard1 == null || Signboard1 == "null") Signboard1 = "";
-	if (Signboard2 == null || Signboard2 == "null") Signboard2 = "";
-
-    return Signboard1.equals(Signboard2);
-}
 function getCapTypeByAltID(altID)
 {
 	myCap = aa.cap.getCapID(altID).getOutput()
@@ -4791,73 +4758,6 @@ function getLastAddressAmendment(customId) {
 
 	return result;
 
-}
-function getLastSignboardAmendment(customId)
-{
-	var result = "";
-	var found = false;
-	var capId = aa.cap.getCapID(customId).getOutput();
-	var parentCapId = getParent(capId);
-	
-	SignboardCA = loadASITable("SIGN BOARD", capId);
-	SignboardCN = loadASITable("SIGN BOARD", parentCapId);
-		
-	for(a in SignboardCA)
-	{
-		found = false;
-		for(n in SignboardCN)
-		{			
-			if(isSameSignboard(SignboardCA[a], SignboardCN[n]))
-			{
-				found = true;
-				break;
-			}
-		}
-		if (!found)
-		{
-			var width = SignboardCA[a]["Width"].fieldValue;
-			var length = SignboardCA[a]["Length"].fieldValue;
-			var boardColor = SignboardCA[a]["Board Color"].fieldValue;
-			var lightingType = SignboardCA[a]["Lighting Type"].fieldValue;
-			result += aa.messageResources.getLocalMessage("message.amend.signboardadd") 
-					+ " " + width + "x" + length + "/" + boardColor + "/" + lightingType + " \n";
-		}
-	}
-	for(n in SignboardCN)
-	{
-		found = false;
-		for(a in SignboardCA)
-		{			
-			if(isSameSignboard(SignboardCN[n], SignboardCA[a]))			
-			{
-				found = true;
-				break;
-			}
-		}
-		if (!found)
-		{
-			var width = SignboardCN[n]["Width"].fieldValue;
-			var length = SignboardCN[n]["Length"].fieldValue;
-			var boardColor = SignboardCN[n]["Board Color"].fieldValue;
-			var lightingType = SignboardCN[n]["Lighting Type"].fieldValue;
-			result += aa.messageResources.getLocalMessage("message.amend.signboardremove") 
-					+ " " + width + "x" + length + "/" + boardColor + "/" + lightingType + " \n";
-		}
-	}
-	return result;
-}	
-function isSameSignboard(Signboard1, Signboard2)
-{	
-	if (equalsSignboard(Signboard1["Width"].fieldValue, Signboard2["Width"].fieldValue)
-			&& equalsSignboard(Signboard1["Length"].fieldValue, Signboard2["Length"].fieldValue)
-			&& equalsSignboard(Signboard1["Total Area"].fieldValue, Signboard2["Total Area"].fieldValue)
-			&& equalsSignboard(Signboard1["Board Color"].fieldValue, Signboard2["Board Color"].fieldValue)
-			&& equalsSignboard(Signboard1["Lighting Type"].fieldValue, Signboard2["Lighting Type"].fieldValue))
-	{
-		return true;
-	}
-	
-	return false;
 }
 
 function taskAssignedDate(wfstr) // optional process name, capId
@@ -6353,12 +6253,11 @@ function validateRelatedRecords(licenseNum)
 						childCapType = childArray[xx].getCapType();
 						
 						if(childCapType.getGroup()=="Services"&& childCapType.getType()=="Advertising Permit" &&
-						    childCapType.getSubType()=="Promotional Campaigns" && childCapType.getCategory()=="Sales")
+						    childCapType.getSubType()=="Promotional Campaigns"&& childCapType.getCategory()=="Sales")
 						{
 						    aa.debug("Michael1129,childCapType.getGroup()==",childCapType.getGroup());
 							aa.debug("Michael1129,childCapType.getType()==",childCapType.getType());
 							aa.debug("Michael1129,childCapType.getSubType()==",childCapType.getSubType());
-                                                        aa.debug("Michael1129,childCapType.getCategory()==",childCapType.getCategory());
 						   if(issueDateLessThanOneYearFromNow(childCapId))
 						   {
 							  salesTransactionCount ++;
@@ -6366,7 +6265,8 @@ function validateRelatedRecords(licenseNum)
 						}
 						
 					}
-					
+					aa.debug("salesTransactionCount==",salesTransactionCount);
+
 					if(salesTransactionCount > 1)
 					{
 						isValidatedPassed = false; 
@@ -7070,7 +6970,7 @@ function setContactBusinessNameToAppName()
     aa.debug("Michael2014317,capId==",capId);
    if(contactResult.getSuccess())
    {
-      var cdScriptObjResult = aa.cap.getCapDetail(capId);
+          var cdScriptObjResult = aa.cap.getCapDetail(capId);
 	  if (!cdScriptObjResult.getSuccess())
 		{ logDebug("**ERROR: No cap detail script object : " + cdScriptObjResult.getErrorMessage()) ; return false; }
 	  var cdScriptObj = cdScriptObjResult.getOutput();
@@ -7080,22 +6980,22 @@ function setContactBusinessNameToAppName()
 	  
 	  
 	  
-      var contactlist = contactResult.getOutput();
+          var contactlist = contactResult.getOutput();
 	  var cCap = aa.cap.getCap(capId).getOutput();
 	  
 	  var currentCap =  cCap.getCapModel();
 	  for(var contact in contactlist)
 	  {	   
 	      var capcontact  = contactlist[contact].getCapContactModel();
-          aa.debug("Michael2014317,capcontact.getTradeName()==",capcontact.getTradeName());
-		  aa.debug("Michael2014317,capcontact.getBusinessName()==",capcontact.getBusinessName());
+              aa.debug("Michael2014317,capcontact.getTradeName()==",capcontact.getTradeName());
+	      aa.debug("Michael2014317,capcontact.getBusinessName()==",capcontact.getBusinessName());
 		  
-          currentCap.setSpecialText(capcontact.getBusinessName());		  
-		  aa.cap.editCapByPK(currentCap);
+              currentCap.setSpecialText(capcontact.getBusinessName());		  
+	      aa.cap.editCapByPK(currentCap);
 		  
-		  cd.setShortNotes(capcontact.getTradeName());
+	      cd.setShortNotes(capcontact.getTradeName());
 	      cdWrite = aa.cap.editCapDetail(cd)
-		  if (!cdWrite.getSuccess())
+	      if (!cdWrite.getSuccess())
 			{ logDebug("**ERROR writing capdetail : " + cdWrite.getErrorMessage()) ; return false ; }
 	  }
 	}
