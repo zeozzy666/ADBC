@@ -22,7 +22,8 @@ logCustom(dstr, initializeLog);
 }
 function logCustom(dstr, initialize)
 {
-	var timeStamp = new Date().getTime();
+	var dateObj = new Date();
+	var timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
 	var asDes = "";
 	var wftuDes = "";
 	//if initialize then it is first entry of the event
@@ -51,33 +52,62 @@ function logCustom(dstr, initialize)
 		switch(controlString)
 		{
 			case "WorkflowTaskUpdateAfter":
-			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
-			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
-			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes + " !| ", mslogDir);
+			aa.util.writeToFile("\n" + timeStamp +
+				" !| Event Name: " + aa.env.getValue("EventName") +
+				" !| Username : " + aa.env.getValue("CurrentUserID") +
+				" !| User Group: " + currentUserGroup +
+				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
+				" !| User Type: " + userType +
+				" !| " + "Event Category: " + appTypeString +
+				" !| " + "Event description: " + wftuDes +
+				" !| ", mslogDir);
 			break;
 
 			case "WorkflowTaskUpdateBefore":
-			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
-			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
-			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + wftuDes + " !| ", mslogDir);		
+			aa.util.writeToFile("\n" + timeStamp +
+				" !| Event Name: " + aa.env.getValue("EventName") +
+				" !| Username : " + aa.env.getValue("CurrentUserID") +
+				" !| User Group: " + currentUserGroup +
+				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
+				" !| User Type: " + userType +
+				" !| " + "Event Category: " +appTypeString +
+				" !| " + "Event description: " + wftuDes +
+				" !| ", mslogDir);
 			break;
 
 			case "ApplicationSubmitBefore":
-			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
-			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
-			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + asDes + " !| ", mslogDir);			
+			aa.util.writeToFile("\n" + timeStamp +
+				" !| Event Name: " + aa.env.getValue("EventName") +
+				" !| Username : " + aa.env.getValue("CurrentUserID") +
+				" !| User Group: " + currentUserGroup +
+				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
+				" !| User Type: " + userType +
+				" !| " + "Event Category: " + appTypeString +
+				" !| " + "Event description: " + asDes +
+				" !| ", mslogDir);
 			break;
 
 			case "ApplicationSubmitAfterStart":
-			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
-			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
-			" !| User Type: " + userType + " !| " + "Event Category: " + appTypeString + " !| " + "Event description: " + asDes + " !| ", mslogDir);
+			aa.util.writeToFile("\n" + timeStamp +
+				" !| Event Name: " + aa.env.getValue("EventName") +
+				" !| Username : " + aa.env.getValue("CurrentUserID") +
+				" !| User Group: " + currentUserGroup +
+				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
+				" !| User Type: " + userType +
+				" !| " + "Event Category: " + appTypeString +
+				" !| " + "Event description: " + asDes +
+				" !| ", mslogDir);
 			break;
 
 			default:
-			aa.util.writeToFile("\n" + timeStamp + " !| Event Name: " + aa.env.getValue("EventName") + " !| Username : " + aa.env.getValue("CurrentUserID")
-			+ " !| User Group: " + currentUserGroup + " !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") + 
-			" !| User Type: " + userType + " !| " + "Event Category: Default" + " !| ", mslogDir);	
+			aa.util.writeToFile("\n" + timeStamp +
+				" !| Event Name: " + aa.env.getValue("EventName") +
+				" !| Username : " + aa.env.getValue("CurrentUserID") +
+				" !| User Group: " + currentUserGroup +
+				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
+				" !| User Type: " + userType +
+				" !| " + "Event Category: Default" +
+				" !| ", mslogDir);
 		}
 		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
 	}
@@ -7190,4 +7220,22 @@ function getAENewFees()
 	}
 		
 
+}
+//fish 04/10/2014. function to format javascript date to string in specific format.
+//Add to it as necessary
+function dateFormat(dateObj, fstring)
+{
+	var rsult = "";
+	switch(fstring.toUpperCase())
+	{
+		case "DD/MM/YYYY HH:MM:SS":
+		result = dateObj.getDate() + "/" + dateObj.getMonth() + "/" + dateObj.getFullYear() + " " + 
+		dateObj.getHours() + ":" + dateObj.getMinutes() + ":" + dateObj.getSeconds();
+		break;
+	
+		default:
+		result = "Could not format date";
+		break;
+	}
+	return result;
 }
