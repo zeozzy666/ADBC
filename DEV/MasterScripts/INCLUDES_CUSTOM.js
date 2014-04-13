@@ -24,8 +24,7 @@ function logCustom(dstr, initialize)
 {
 	var dateObj = new Date();
 	var timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
-	var asDes = "";
-	var wftuDes = "";
+	var eventDes = "";
 	//if initialize then it is first entry of the event
 	if (initialize)
 	{
@@ -48,67 +47,61 @@ function logCustom(dstr, initialize)
 			currentUserGroup = currentUserGroupObj.getGroupName();
 		}
 
-		//Output event information based on event type
+		//Set event Description
 		switch(controlString)
 		{
 			case "WorkflowTaskUpdateAfter":
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: " + appTypeString +
-				" !| " + "Event description: " + wftuDes +
-				" !| ", mslogDir);
-			break;
-
 			case "WorkflowTaskUpdateBefore":
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: " +appTypeString +
-				" !| " + "Event description: " + wftuDes +
-				" !| ", mslogDir);
+			eventDes = wftuDes;
 			break;
 
-			case "ApplicationSubmitBefore":
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: " + appTypeString +
-				" !| " + "Event description: " + asDes +
-				" !| ", mslogDir);
-			break;
-
+			case "ApplicationSubmitAfter":
 			case "ApplicationSubmitAfterStart":
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: " + appTypeString +
-				" !| " + "Event description: " + asDes +
-				" !| ", mslogDir);
+			case "ApplicationSubmitBefore":
+			eventDes = asDes;
 			break;
-
+		
 			default:
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: Default" +
-				" !| ", mslogDir);
+			eventDes = "";
+			break;
 		}
+
+		aa.util.writeToFile("\n" + timeStamp +
+			" !| Event Name: " + aa.env.getValue("EventName") +
+			" !| Username : " + aa.env.getValue("CurrentUserID") +
+			" !| User Group: " + currentUserGroup +
+			" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
+			" !| User Type: " + userType +
+			" !| " + "Event Category: " + appTypeString +
+			" !| " + "Event description: " + eventDes +
+			" !| ", mslogDir);
+
+		//Output commercial activities
+		comActs = loadASITable("COMMERCIAL ACTIVITIES");
+		if ("object".equals(typeof(comActs)) && comActs.length > 0)
+		{
+			for(var x in comActs)
+			{
+				aa.util.writeToFile("Commercial Activity: " + comActs[x]["Name"] + " !| ", mslogDir);
+			}
+		}
+
+		//Output ASI
+		for (var asi in AInfo)
+		{
+			aa.util.writeToFile("ASI " + asi + " = " + AInfo[asi] + " !| ", mslogDir);
+		}
+
+		//Output Address if any
+		var address = aa.address.getAddressWithAttributeByCapId(capId).getOutput();
+		if (address && address.length > 0)
+		{
+			var addressString = "";
+			addressString = address[0].getCity() +  " " + address[0].getAddressLine1() +  " " +  address[0].getAddressLine2() +  " " + 
+			address[0].getNeighborhood() +  " " + address[0].getSecondaryRoad(); 
+			aa.util.writeToFile("Address: " + addressString + " !| ", mslogDir);
+		}
+
 		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
 	}
 	else
