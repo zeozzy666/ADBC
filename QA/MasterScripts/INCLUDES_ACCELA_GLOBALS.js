@@ -65,6 +65,10 @@ var sysDateMMDDYYYY = dateFormatted(sysDate.getMonth(),sysDate.getDayOfMonth(),s
 
 var servProvCode = aa.getServiceProviderCode();
 
+if (currentUserID != null && currentUserID == "JWANG")
+{
+	showDebug = 3;
+}
 
 logDebug("EMSE Script Framework Versions");
 logDebug("EVENT TRIGGERED: " + vEventName);
