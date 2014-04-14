@@ -22,7 +22,6 @@
 var controlString = "ApplicationSubmitBefore"; 	// Standard choice for control
 var preExecute = "PreExecuteForBeforeEvents"
 var documentOnly = false;						// Document Only -- displays hierarchy of std choice steps
-var mslogDir = "C:\\Accela72\\av.biz\\log\\" + aa.env.getValue("CurrentUserID") + "\\" + aa.date.getCurrentDate().getDayOfMonth() + "-" + aa.date.getCurrentDate().getMonth() + "-" + aa.date.getCurrentDate().getYear() + ".html";
 /*------------------------------------------------------------------------------------------------------/
 | END User Configurable Parameters
 /------------------------------------------------------------------------------------------------------*/

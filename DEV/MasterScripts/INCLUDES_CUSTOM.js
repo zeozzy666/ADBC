@@ -15,7 +15,8 @@ logCustom(dstr, initializeLog);
 		vLevel = arguments[1];
 	if ((showDebug & vLevel) == vLevel || vLevel == 1)
 		debug += dstr + br;
-	if ((showDebug & vLevel) == vLevel)
+	if ((showDebug & vLevel) == vLevel|| (vEventName && vEventName == "WorkflowTaskUpdateAfter" 
+&& wfTask && wfTask=="Verify and Validate Application" && wfStatus && wfStatus =="Draft"))
 		aa.debug(aa.getServiceProviderCode() + " : " + aa.env.getValue("CurrentUserID"), dstr);
 		
 		initializeLog = false;
@@ -59,6 +60,9 @@ function logCustom(dstr, initialize)
 }
 function logCustomPartners()
 {
+	//If not capId then its ASB and we can just return
+	if (!capId) return;
+
 	var capContactArray = aa.people.getCapContactByCapID(capId).getOutput();
 	for (var cont in capContactArray)
 	{
@@ -114,11 +118,13 @@ function logCustomHeader()
 
 		//Log User type
 		var userType = "Internal User";
-		if (aa.env.getValue("CurrentUserID").indexOf("PUBLIC") > -1)
+		var currUser = aa.env.getValue("CurrentUserID");
+
+		if (currUser && currUser.indexOf("PUBLIC") > -1)
 		{
 			userType = "Internet User";
 		}
-		else if (aa.env.getValue("CurrentUserID").indexOf("MOBILE") > -1)
+		else if (currUser && currUser.indexOf("MOBILE") > -1)
 		{
 			userType = "Mobile App";
 		}
@@ -164,12 +170,15 @@ function logCustomHeader()
 }
 function logCustomActivities()
 {
-	comActs = loadASITable("COMMERCIAL ACTIVITIES");
-	if ("object".equals(typeof(comActs)) && comActs.length > 0)
+	if (!"ApplicationSubmitBefore".equals(controlString))
 	{
-		for(var x in comActs)
+		comActs = loadASITable("COMMERCIAL ACTIVITIES");
+		if ("object".equals(typeof(comActs)) && comActs.length > 0)
 		{
-			aa.util.writeToFile("Commercial Activity: " + comActs[x]["Name"] + " !| ", mslogDir);
+			for(var x in comActs)
+			{
+				aa.util.writeToFile("Commercial Activity: " + comActs[x]["Name"] + " !| ", mslogDir);
+			}
 		}
 	}
 }
