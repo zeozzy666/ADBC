@@ -22,14 +22,97 @@ logCustom(dstr, initializeLog);
 }
 function logCustom(dstr, initialize)
 {
+	//Initialize DateTime
 	var dateObj = new Date();
-	var timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
-	var asDes = "";
-	var wftuDes = "";
+	var timeStamp = "";
 	//if initialize then it is first entry of the event
 	if (initialize)
 	{
-		//Determine User type
+		//Log initial header. Order is important and all entries must be present even if empty or null
+		logCustomHeader();
+
+		//Log commercial activities
+		logCustomActivities();
+
+		//Log ASI
+		logCustomASI();
+
+		//Log Address if any
+		logCustomAddress();
+
+		//Log partners
+		logCustomPartners();
+
+		//Get DateTime
+		dateObj = new Date();
+		timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
+
+		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
+	}
+	else
+	{
+		//Get DateTime
+		dateObj = new Date();
+		timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
+		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
+	}
+}
+function logCustomPartners()
+{
+	var capContactArray = aa.people.getCapContactByCapID(capId).getOutput();
+	for (var cont in capContactArray)
+	{
+		//Get name
+		var thisCont = capContactArray[cont];
+		var contString = "Partner: ";
+		contString = contString + thisCont.getPeople().getFirstName() + " " + thisCont.getPeople().getFullName() + " " +
+		thisCont.getPeople().getMiddleName() + " " + thisCont.getPeople().getLastName() + " !| ";
+
+		//Get contact type
+		contString = contString + "Partner contact type: " + thisCont.getPeople().getContactType() + " !| ";
+
+		//Get Attributes
+		contAttribs = thisCont.getPeople().getAttributes().toArray();
+		var attribString = "";
+		for (var att in contAttribs)
+		{
+			var thisAttrib = contAttribs[att];
+			attribString = attribString + "Contact Attribute " + thisAttrib.attributeName + " : " + thisAttrib.attributeValue + " !| ";
+
+		}
+
+		//Concat the strings
+		contString = contString + attribString;
+
+		//Write to file
+		aa.util.writeToFile(contString, mslogDir);
+	}
+}
+function logCustomAddress()
+{
+	var address = aa.address.getAddressWithAttributeByCapId(capId).getOutput();
+	if (address && address.length > 0)
+	{
+		var addressString = "";
+		addressString = address[0].getCity() +  " " + address[0].getAddressLine1() +  " " +  address[0].getAddressLine2() +  " " +
+		address[0].getNeighborhood() +  " " + address[0].getSecondaryRoad();
+		aa.util.writeToFile("Address: " + addressString + " !| ", mslogDir);
+	}
+}
+function logCustomASI()
+{
+	for (var asi in AInfo)
+	{
+		aa.util.writeToFile("ASI " + asi + " = " + AInfo[asi] + " !| ", mslogDir);
+	}
+}
+function logCustomHeader()
+{
+		//Get date
+		var dateObj = new Date();
+		var timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
+
+		//Log User type
 		var userType = "Internal User";
 		if (aa.env.getValue("CurrentUserID").indexOf("PUBLIC") > -1)
 		{
@@ -40,80 +123,54 @@ function logCustom(dstr, initialize)
 			userType = "Mobile App";
 		}
 
-		//Get userGroup
+		//Log userGroup
 		var currentUserGroup;
-		var currentUserGroupObj = aa.userright.getUserRight(appTypeArray[0],currentUserID).getOutput()
-		if (currentUserGroupObj) 
+		var currentUserGroupObj = aa.userright.getUserRight(appTypeArray[0],currentUserID).getOutput();
+		if (currentUserGroupObj)
 		{
 			currentUserGroup = currentUserGroupObj.getGroupName();
 		}
 
-		//Output event information based on event type
+		//Set event Description
+		var eventDes = "";
 		switch(controlString)
 		{
 			case "WorkflowTaskUpdateAfter":
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: " + appTypeString +
-				" !| " + "Event description: " + wftuDes +
-				" !| ", mslogDir);
-			break;
-
 			case "WorkflowTaskUpdateBefore":
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: " +appTypeString +
-				" !| " + "Event description: " + wftuDes +
-				" !| ", mslogDir);
+			eventDes = wftuDes;
 			break;
 
-			case "ApplicationSubmitBefore":
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: " + appTypeString +
-				" !| " + "Event description: " + asDes +
-				" !| ", mslogDir);
-			break;
-
+			case "ApplicationSubmitAfter":
 			case "ApplicationSubmitAfterStart":
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: " + appTypeString +
-				" !| " + "Event description: " + asDes +
-				" !| ", mslogDir);
+			case "ApplicationSubmitBefore":
+			eventDes = asDes;
 			break;
-
+		
 			default:
-			aa.util.writeToFile("\n" + timeStamp +
-				" !| Event Name: " + aa.env.getValue("EventName") +
-				" !| Username : " + aa.env.getValue("CurrentUserID") +
-				" !| User Group: " + currentUserGroup +
-				" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
-				" !| User Type: " + userType +
-				" !| " + "Event Category: Default" +
-				" !| ", mslogDir);
+			eventDes = "";
+			break;
 		}
-		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
-	}
-	else
+
+		aa.util.writeToFile("\n" + timeStamp +
+			" !| Event Name: " + aa.env.getValue("EventName") +
+			" !| Username : " + aa.env.getValue("CurrentUserID") +
+			" !| User Group: " + currentUserGroup +
+			" !| User Full Name: " + aa.env.getValue("StaffFirstName") + " " + aa.env.getValue("StaffLastName") +
+			" !| User Type: " + userType +
+			" !| " + "Event Category: " + appTypeString +
+			" !| " + "Event description: " + eventDes +
+			" !| ", mslogDir);
+
+}
+function logCustomActivities()
+{
+	comActs = loadASITable("COMMERCIAL ACTIVITIES");
+	if ("object".equals(typeof(comActs)) && comActs.length > 0)
 	{
-		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
+		for(var x in comActs)
+		{
+			aa.util.writeToFile("Commercial Activity: " + comActs[x]["Name"] + " !| ", mslogDir);
+		}
 	}
 }
 //Functions for WorkflowTaskUpdateBefore////////////////////////////////////////////////////////////////////////////////
