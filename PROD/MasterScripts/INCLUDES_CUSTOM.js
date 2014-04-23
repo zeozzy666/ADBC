@@ -7185,3 +7185,27 @@ function createRefContactsFromCapContactsAndLink(pCapId, ignoreArray, replaceCap
 	}
 
 }
+function closeAllOpenProcessTasks(thisProcessID,taskStat,taskComment) // optional capId
+	{
+	var itemCap = capId;
+	if (arguments.length == 4) itemCap = arguments[3]; // use cap ID specified in args
+
+
+	var workflowResult = aa.workflow.getTasks(itemCap);
+	if (workflowResult.getSuccess())
+		var wfObj = workflowResult.getOutput();
+	else
+		{ logDebug("**ERROR: Failed to get workflow object: " + s_capResult.getErrorMessage()); return false; }
+
+	for (i in wfObj)
+		{
+		var fTaskSM = wfObj[i];
+		if (fTaskSM.getProcessID() == thisProcessID && fTaskSM.getActiveFlag() == "Y")
+			{
+			//aa.print("found an active task: " + stepnumber + " , " + thisProcessID);
+			var dispositionDate = aa.date.getCurrentDate();
+			var stepnumber = fTaskSM.getStepNumber();
+			aa.workflow.handleDisposition(itemCap,stepnumber,thisProcessID,taskStat,dispositionDate, taskComment,taskComment,systemUserObj ,"Y");
+			}
+		}
+	}
