@@ -187,7 +187,7 @@ function logCustomActivities()
 		{
 			for(var x in comActs)
 			{
-			    customActivitiesString += "Commercial Activity: " + comActs[x]["Name"] + " !| ";
+				customActivitiesString += "Commercial Activity: " + comActs[x]["Name"] + " !| ";
 			}
 		}
 	}
