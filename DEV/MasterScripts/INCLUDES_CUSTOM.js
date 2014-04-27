@@ -15,60 +15,58 @@ logCustom(dstr, initializeLog);
 		vLevel = arguments[1];
 	if ((showDebug & vLevel) == vLevel || vLevel == 1)
 		debug += dstr + br;
-	if ((showDebug & vLevel) == vLevel|| (vEventName && vEventName == "WorkflowTaskUpdateAfter" 
-&& wfTask && wfTask=="Verify and Validate Application" && wfStatus && wfStatus =="Draft"))
-		aa.debug(aa.getServiceProviderCode() + " : " + aa.env.getValue("CurrentUserID"), dstr);
-		
-		initializeLog = false;
+	if ((showDebug & vLevel) == vLevel)
+		aa.debug(aa.getServiceProviderCode() + " : " + aa.env.getValue("CurrentUserID"), dstr);			
 }
 function logCustom(dstr, initialize)
 {
 	//Initialize DateTime
 	var dateObj = new Date();
 	var timeStamp = "";
+	var logString = "";
+
 	//if initialize then it is first entry of the event
 	if (initialize)
 	{
+		//change the initialize flag to prevent infinite loop
+		initializeLog = false;
+
 		//Log initial header. Order is important and all entries must be present even if empty or null
-		logCustomHeader();
+		logString = logCustomHeader();
 
 		//Log commercial activities
-		logCustomActivities();
+		logString += logCustomActivities();
 
 		//Log ASI
-		logCustomASI();
+		logString += logCustomASI();
 
 		//Log Address if any
-		logCustomAddress();
+		logString += logCustomAddress();
 
 		//Log partners
-		logCustomPartners();
+		logString += logCustomPartners();
 
-		//Get DateTime
-		dateObj = new Date();
-		timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
+	}
 
-		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
-	}
-	else
-	{
-		//Get DateTime
-		dateObj = new Date();
-		timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
-		aa.util.writeToFile(timeStamp + " : "  + dstr + " !| ", mslogDir);
-	}
+    //Get DateTime
+	dateObj = new Date();
+	timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
+	aa.util.writeToFile(logString + timeStamp + " : "  + dstr + " !| ", mslogDir);
 }
+
 function logCustomPartners()
 {
 	//If not capId then its ASB and we can just return
 	if (!capId) return;
 
 	var capContactArray = aa.people.getCapContactByCapID(capId).getOutput();
+	var contString = "";
+
 	for (var cont in capContactArray)
 	{
 		//Get name
 		var thisCont = capContactArray[cont];
-		var contString = "Partner: ";
+		contString += "Partner: ";
 		contString = contString + thisCont.getPeople().getFirstName() + " " + thisCont.getPeople().getFullName() + " " +
 		thisCont.getPeople().getMiddleName() + " " + thisCont.getPeople().getLastName() + " !| ";
 
@@ -87,28 +85,35 @@ function logCustomPartners()
 
 		//Concat the strings
 		contString = contString + attribString;
-
-		//Write to file
-		aa.util.writeToFile(contString, mslogDir);
 	}
+
+	return contString;
 }
 function logCustomAddress()
 {
 	var address = aa.address.getAddressWithAttributeByCapId(capId).getOutput();
+	var addressString = "";
+
 	if (address && address.length > 0)
 	{
-		var addressString = "";
+		
 		addressString = address[0].getCity() +  " " + address[0].getAddressLine1() +  " " +  address[0].getAddressLine2() +  " " +
 		address[0].getNeighborhood() +  " " + address[0].getSecondaryRoad();
 		aa.util.writeToFile("Address: " + addressString + " !| ", mslogDir);
 	}
+
+	return addressString;
 }
 function logCustomASI()
 {
+    var customASIString = "";
+
 	for (var asi in AInfo)
 	{
-		aa.util.writeToFile("ASI " + asi + " = " + AInfo[asi] + " !| ", mslogDir);
+		customASIString += "ASI " + asi + " = " + AInfo[asi] + " !| ";
 	}
+	
+	return customASIString;
 }
 function logCustomHeader()
 {
@@ -157,7 +162,7 @@ function logCustomHeader()
 			break;
 		}
 
-		aa.util.writeToFile("\n" + timeStamp +
+        var customHeaderString = "\n" + timeStamp +
 			" !| Event Name: " + aa.env.getValue("EventName") +
 			" !| Username : " + aa.env.getValue("CurrentUserID") +
 			" !| User Group: " + currentUserGroup +
@@ -165,23 +170,31 @@ function logCustomHeader()
 			" !| User Type: " + userType +
 			" !| " + "Event Category: " + appTypeString +
 			" !| " + "Event description: " + eventDes +
-			" !| ", mslogDir);
-
+			" !| ";
+		
+		return customHeaderString;
 }
+
 function logCustomActivities()
 {
+    var customActivitiesString = "";
+
 	if (!"ApplicationSubmitBefore".equals(controlString))
 	{
 		comActs = loadASITable("COMMERCIAL ACTIVITIES");
+		
 		if ("object".equals(typeof(comActs)) && comActs.length > 0)
 		{
 			for(var x in comActs)
 			{
-				aa.util.writeToFile("Commercial Activity: " + comActs[x]["Name"] + " !| ", mslogDir);
+			    customActivitiesString += "Commercial Activity: " + comActs[x]["Name"] + " !| ";
 			}
 		}
 	}
+
+	return customActivitiesString;
 }
+
 //Functions for WorkflowTaskUpdateBefore////////////////////////////////////////////////////////////////////////////////
 function compareDate(date1,date2)
 {
@@ -5974,8 +5987,9 @@ function issueDateLessThanOneYearFromNow(capId)
 						task = taskArray[xx];
 						
 						var taskDesc = task.getTaskDescription();
-                        
-						if(taskDesc == "License Issuance")
+                                                var status = task.getDisposition();
+                                                aa.debug("status:" ,status);
+						if(taskDesc == "License Issuance" && status =="Complete")
 						{
 						  var temDate = task.getStatusDate();
 						  aa.debug("Michael1129,temDate==",temDate );
@@ -7403,3 +7417,28 @@ function createRefContactsFromCapContactsAndLink(pCapId, ignoreArray, replaceCap
 	}
 
 }
+
+function closeAllOpenProcessTasks(thisProcessID,taskStat,taskComment) // optional capId
+	{
+	var itemCap = capId;
+	if (arguments.length == 4) itemCap = arguments[3]; // use cap ID specified in args
+
+
+	var workflowResult = aa.workflow.getTasks(itemCap);
+	if (workflowResult.getSuccess())
+		var wfObj = workflowResult.getOutput();
+	else
+		{ logDebug("**ERROR: Failed to get workflow object: " + s_capResult.getErrorMessage()); return false; }
+
+	for (i in wfObj)
+		{
+		var fTaskSM = wfObj[i];
+		if (fTaskSM.getProcessID() == thisProcessID && fTaskSM.getActiveFlag() == "Y")
+			{
+			//aa.print("found an active task: " + stepnumber + " , " + thisProcessID);
+			var dispositionDate = aa.date.getCurrentDate();
+			var stepnumber = fTaskSM.getStepNumber();
+			aa.workflow.handleDisposition(itemCap,stepnumber,thisProcessID,taskStat,dispositionDate, taskComment,taskComment,systemUserObj ,"Y");
+			}
+		}
+	}
