@@ -16,9 +16,7 @@ logCustom(dstr, initializeLog);
 	if ((showDebug & vLevel) == vLevel || vLevel == 1)
 		debug += dstr + br;
 	if ((showDebug & vLevel) == vLevel)
-		aa.debug(aa.getServiceProviderCode() + " : " + aa.env.getValue("CurrentUserID"), dstr);
-		
-		initializeLog = false;
+		aa.debug(aa.getServiceProviderCode() + " : " + aa.env.getValue("CurrentUserID"), dstr);			
 }
 function logCustom(dstr, initialize)
 {
@@ -30,6 +28,9 @@ function logCustom(dstr, initialize)
 	//if initialize then it is first entry of the event
 	if (initialize)
 	{
+		//change the initialize flag to prevent infinite loop
+		initializeLog = false;
+
 		//Log initial header. Order is important and all entries must be present even if empty or null
 		logString = logCustomHeader();
 
