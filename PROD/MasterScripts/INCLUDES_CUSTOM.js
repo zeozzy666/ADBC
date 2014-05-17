@@ -6732,13 +6732,11 @@ function mailReportToContact(reportName,mSubj,mText,aaReportParamName,aaReportPa
 	else
 	{
 		logDebug ("**WARNING: getting cap contact: " + capAddResult.getErrorMessage());
-		return false;
 	}
 
 	if (!conArr.length)
 	{
 		logDebug ("**WARNING: No contact available");
-		return false;
 	}
 		
 	for (yy in conArr) 
