@@ -30,7 +30,7 @@ function logCustom(dstr, initialize)
 	{
 		//change the initialize flag to prevent infinite loop
 		initializeLog = false;
-
+		
 		//Log initial header. Order is important and all entries must be present even if empty or null
 		logString = logCustomHeader();
 
@@ -51,7 +51,13 @@ function logCustom(dstr, initialize)
     //Get DateTime
 	dateObj = new Date();
 	timeStamp = dateFormat(dateObj, "DD/MM/YYYY HH:MM:SS");
-	aa.util.writeToFile(logString + timeStamp + " : "  + dstr + " !| ", mslogDir);
+	//aa.util.writeToFile(logString + timeStamp + " : "  + dstr + " !| ", mslogDir);
+	//Removed payload
+	if(logString.length > 0)
+	{
+		aa.util.writeToFile(logString + timeStamp + " !| ", mslogDir);
+	}
+	
 }
 
 function logCustomPartners()
@@ -99,7 +105,7 @@ function logCustomAddress()
 		
 		addressString = address[0].getCity() +  " " + address[0].getAddressLine1() +  " " +  address[0].getAddressLine2() +  " " +
 		address[0].getNeighborhood() +  " " + address[0].getSecondaryRoad();
-		aa.util.writeToFile("Address: " + addressString + " !| ", mslogDir);
+		//aa.util.writeToFile("Address: " + addressString + " !| ", mslogDir);
 	}
 
 	return addressString;
@@ -939,7 +945,7 @@ fees = loadASITable("AE FEES", actCap);
 		//continue;
 		//skip fees marked DED Approval
 		if (fees[x]["DED Approval"].fieldValue.equals("CHECKED")) continue; 
-		if(fees[x]["Main Area"].fieldValue && !fees[x]["Main Area"].fieldValue.equals(capCity)) 
+		if(fees[x]["Main Area"].fieldValue && !fees[x]["Main Area"].fieldValue.equals("") && !fees[x]["Main Area"].fieldValue.equals(capCity)) 
 		{
 			logDebug("Fees main area (" + fees[x]["Main Area"].fieldValue + ") and address main area" + capCity + " dont match");
 			continue;
@@ -967,7 +973,7 @@ if(fees[x]["Transaction Type"].fieldValue.equals("Activity Replacement") && (!ap
 		if(fees[x]["Transaction Type"].fieldValue.equals("Legal Form Amendment") && (!appTypeString.equals(licenseAmend) || !getAppSpecific("Legal Form Amendment").toUpperCase().equals("YES") || tType != "Legal Form Amendment")) continue;
 		if(fees[x]["Transaction Type"].fieldValue.equals("Location Amendment") && (!appTypeString.equals(licenseAmend) || !getAppSpecific("Location Amendment").toUpperCase().equals("YES") || tType != "Location Amendment")) continue;
 		if(fees[x]["Transaction Type"].fieldValue.equals("License Infr. Amendment") && (!appTypeString.equals(licenseAmend) || !getAppSpecific("License Infr. Amendment").toUpperCase().equals("YES") || tType != "License Infr. Amendment")) continue;
-		if(fees[x]["Main Area"].fieldValue && !fees[x]["Main Area"].fieldValue.equals(capCity)) continue;
+		if(fees[x]["Main Area"].fieldValue && !fees[x]["Main Area"].fieldValue.equals("") && !fees[x]["Main Area"].fieldValue.equals(capCity)) continue;
 		//Filter for new Trade name AE Fees functionality
 		if("Branch".equals(actCap.getCustomID()) && typeof(tnCap) == "object" && fees[x]["Branch Type"] && !appMatch("*/*/*/"+ fees[x]["Branch Type"].fieldValue, tnCap)) continue;
 		
